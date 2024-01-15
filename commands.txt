@@ -1,3 +1,20 @@
+# Add SSH key:
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub # copy the output of this command, and paste it into your github (Settings > SSH and GPG keys > New SSH key)
+# check the if the key is ready
+ssh -T git@github.com
+
+# Connect to your repository:
+#   using https protocol
 git remote add origin https://github.com/SalahaddinAlyafey/Predict-Time-to-Crack-Password.git
+#   using ssh protocol
+git remote set-url origin git@github.com:SalahaddinAlyafey/Predict-Time-to-Crack-Password.git
 git branch -M main
 git push -u origin main
+
+git add .
+git commit -m "وصف للتغييرات"
+git push origin main
+
