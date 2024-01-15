@@ -171,7 +171,7 @@ def api_predict():
         data = request.get_json(force=True)
         password = data['password']
         result = API_Function(password)
-        return jsonify({'time_sec': result})
+        return jsonify({'time_sec': str(result)})
     except Exception as e:
         return jsonify({'error': f"Error: {e}"})
 
