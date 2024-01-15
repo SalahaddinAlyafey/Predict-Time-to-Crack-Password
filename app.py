@@ -1,8 +1,7 @@
 import math
 import joblib
 import pandas as pd
-from flask import Flask, request, jsonify, render_template
-
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -11,18 +10,10 @@ s_model = joblib.load(f'{path}/models/strength_model.pkl')
 e_model = joblib.load(f'{path}/models/exponent_model.pkl')
 t_model = joblib.load(f'{path}/models/time_model.pkl')
 
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-
-
 def get_passwords(input_passwords):
     pswd = [input_passwords]
     df3 = pd.DataFrame(pswd, columns=['password'])
     return df3
-
 
 def calculate_entropy(password):
     lw, up, dg, sp = 0, 0, 0, 0
@@ -41,7 +32,6 @@ def calculate_entropy(password):
     password_length = len(password)
     entropy = math.log2(character_set_size ** password_length)
     return entropy
-
 
 def predict_time(dftmp, strength_model, exp_model, time_model):
     entropy_list, length_list = [], []
@@ -70,6 +60,27 @@ def predict_time(dftmp, strength_model, exp_model, time_model):
     dftmp['time_sec'] = time_sec
     return dftmp
 
+def mainFunction(values):
+    df3 = get_passwords(values)
+    # Predicting:
+    df3 = predict_time(df3, s_model, e_model, t_model)
+    final_result = df3['time_sec'].values[0]
+    return final_result
+
+@app.route('/api/predict', methods=['POST'])
+def api_predict():
+    '''
+    Endpoint for API predictions
+    '''
+    data = request.get_json()
+    password = data['password']
+    result = mainFunction(password)
+    return jsonify({'time_sec': result})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
 
 def convert_seconds_to_time(seconds):
     minutes, seconds = divmod(seconds, 60)
@@ -79,8 +90,6 @@ def convert_seconds_to_time(seconds):
     years, months = divmod(months, 12)
     centuries, years = divmod(years, 100)
     return int(centuries), int(years), int(months), int(days), int(hours), int(minutes), seconds
-
-
 def result_of_time_processing(seconds):
     label = {
         0:{ # 'century'
@@ -129,27 +138,3 @@ def result_of_time_processing(seconds):
     else:
         result = ", ".join(txt)
     return result
-
-
-
-def mainFunction(values):
-    df3 = get_passwords(values)
-    # Predicting:
-    df3 = predict_time(df3, s_model, e_model, t_model)
-    # df3.loc[0, 'result'] = result_of_time_processing(df3.loc[0, 'time_sec'])
-    # final_result = f"Time needed to crack [{df3.loc[0, 'password']}] is: {df3.loc[0, 'result']}"
-    final_result = df3['time_sec'].values[0]
-    return str(final_result)
-
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    '''
-    For rendering results on HTML GUI
-    '''
-    int_features = [x for x in request.form.values()]
-    output = mainFunction(int_features)
-    return render_template('index.html', prediction_text='{}'.format(output))
-
-if __name__ == "__main__":
-    app.run(debug=True)
