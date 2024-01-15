@@ -133,17 +133,13 @@ def result_of_time_processing(seconds):
 
 
 def mainFunction(values):
-    # path = '.'
-    # # Loading the models:
-    # s_model = joblib.load(f'{path}/strength_model.pkl')
-    # e_model = joblib.load(f'{path}/exponent_model.pkl')
-    # t_model = joblib.load(f'{path}/time_model.pkl')
     df3 = get_passwords(values)
     # Predicting:
     df3 = predict_time(df3, s_model, e_model, t_model)
-    df3.loc[0, 'result'] = result_of_time_processing(df3.loc[0, 'time_sec'])
-    final_result = f"Time needed to crack [{df3.loc[0, 'password']}] is: {df3.loc[0, 'result']}"
-    return final_result + "."
+    # df3.loc[0, 'result'] = result_of_time_processing(df3.loc[0, 'time_sec'])
+    # final_result = f"Time needed to crack [{df3.loc[0, 'password']}] is: {df3.loc[0, 'result']}"
+    final_result = df3['time_sec'].values[0]
+    return str(final_result)
 
 
 @app.route('/predict', methods=['POST'])
@@ -153,9 +149,6 @@ def predict():
     '''
     int_features = [x for x in request.form.values()]
     output = mainFunction(int_features)
-    # final_features = [np.array(int_features)]
-    # prediction = s_model.predict(final_features)
-    # output = round(prediction[0], 2)
     return render_template('index.html', prediction_text='_{}_'.format(output))
 
 if __name__ == "__main__":
