@@ -17,7 +17,6 @@ def home():
     return render_template('index.html')
 
 
-
 def get_passwords(input_passwords):
     pswd = [input_passwords]
     df3 = pd.DataFrame(pswd, columns=['password'])
@@ -135,8 +134,11 @@ def mainFunction(values):
     df3 = get_passwords(values)
     # Predicting:
     df3 = predict_time(df3, s_model, e_model, t_model)
-    df3.loc[0, 'result'] = result_of_time_processing(df3.loc[0, 'time_sec'])
-    final_result = f"Time needed to crack [{df3.loc[0, 'password']}] is: {df3.loc[0, 'result']}"
+    if 'time_sec' in df3.columns:
+        df3.loc[0, 'result'] = result_of_time_processing(df3.loc[0, 'time_sec'])
+        final_result = f"Time needed to crack [{df3.loc[0, 'password']}] is: {df3.loc[0, 'result']}"
+    else:
+        final_result = "Error in prediction"
     return final_result
 
 
@@ -145,10 +147,12 @@ def predict():
     '''
     For rendering results on HTML GUI
     '''
-    int_features = [x for x in request.form.values()]
-    output = mainFunction(int_features)
-    return render_template('index.html', prediction_text=output)
-
+    try:
+        int_features = [x for x in request.form.values()]
+        output = mainFunction(int_features)
+        return render_template('index.html', prediction_text=output)
+    except Exception as e:
+        return render_template('index.html', prediction_text=f"Error: {e}")
 
 
 def API_Function(values):
@@ -163,10 +167,13 @@ def api_predict():
     '''
     Endpoint for API predictions
     '''
-    data = request.get_json(force=True)
-    password = data['password']
-    result = API_Function(password)
-    return jsonify({'time_sec': result})
+    try:
+        data = request.get_json(force=True)
+        password = data['password']
+        result = API_Function(password)
+        return jsonify({'time_sec': result})
+    except Exception as e:
+        return jsonify({'error': f"Error: {e}"})
 
 
 if __name__ == "__main__":
