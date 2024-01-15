@@ -149,7 +149,7 @@ def predict():
     '''
     int_features = [x for x in request.form.values()]
     output = mainFunction(int_features)
-    return render_template('index.html', prediction_text='_{}_'.format(output))
+    return render_template('index.html', prediction_text='{}'.format(output))
 
 if __name__ == "__main__":
     app.run(debug=True)
