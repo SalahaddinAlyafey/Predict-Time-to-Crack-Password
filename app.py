@@ -2,9 +2,10 @@ import math
 import joblib
 import pandas as pd
 from flask import Flask, request, jsonify, render_template
-
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # تفعيل CORS
 
 path = '.'
 s_model = joblib.load(f'{path}/models/strength_model.pkl')
@@ -26,15 +27,23 @@ def get_passwords(input_passwords):
 def calculate_entropy(password):
     lw, up, dg, sp = 0, 0, 0, 0
     for char in password:
-        if char.islower(): lw += 1
-        elif char.isupper(): up += 1
-        elif char.isdigit(): dg += 1
-        else: sp += 1
+        if char.islower():
+            lw += 1
+        elif char.isupper():
+            up += 1
+        elif char.isdigit():
+            dg += 1
+        else:
+            sp += 1
     csz = 0
-    if lw > 0: csz += 26
-    elif up > 0: csz += 26
-    elif dg > 0: csz += 10
-    elif sp > 0: csz += 32
+    if lw > 0:
+        csz += 26
+    elif up > 0:
+        csz += 26
+    elif dg > 0:
+        csz += 10
+    elif sp > 0:
+        csz += 32
 
     character_set_size = csz
     password_length = len(password)
@@ -50,22 +59,22 @@ def predict_time(dftmp, strength_model, exp_model, time_model):
         entropy_list.append(entropy)
     dftmp['length'] = length_list
     dftmp['entropy'] = entropy_list
-    
+
     strength = strength_model.predict(dftmp.drop(columns=['password']))
     dftmp['strength'] = strength
-    
+
     exponent = exp_model.predict(dftmp.drop(columns=['password']))
     dftmp['exponent'] = exponent
-    
+
     time_val = time_model.predict(dftmp.drop(columns=['password']))
     dftmp['time'] = time_val
-    
+
     time_sec = []
     for i in dftmp.index:
         ex = dftmp.loc[i, 'exponent']
         ti = dftmp.loc[i, 'time']
         time_sec.append(ti * 10**ex)
-    
+
     dftmp['time_sec'] = time_sec
     return dftmp
 
@@ -82,36 +91,36 @@ def convert_seconds_to_time(seconds):
 
 def result_of_time_processing(seconds):
     label = {
-        0:{ # 'century'
-            'singl':'Century',
+        0: {  # 'century'
+            'singl': 'Century',
             'plural': 'Centuries'
         },
-        1:{ # 'year'
+        1: {  # 'year'
             'singl': 'Year',
             'plural': 'Years'
         },
-        2:{ # 'month'
+        2: {  # 'month'
             'singl': 'Month',
             'plural': 'Months'
         },
-        3:{ # 'day'
+        3: {  # 'day'
             'singl': 'Day',
             'plural': 'Days'
         },
-        4:{ # 'hour'
+        4: {  # 'hour'
             'singl': 'Hour',
             'plural': 'Hours'
         },
-        5:{ # 'minut'
+        5: {  # 'minut'
             'singl': 'Minut',
             'plural': 'Minuts'
         },
-        6:{ # 'second'
+        6: {  # 'second'
             'singl': 'Second',
             'plural': 'Seconds'
         }
     }
-    
+
     res = list(convert_seconds_to_time(seconds))
     txt = []
     for i in range(len(res)):
